@@ -45,12 +45,12 @@ def loadAOV(value):
     selectedAOV = cmds.optionMenu('aovsListMenu',q=1,v=1)
     print "Selected AOV: %s" % selectedAOV
     
-    img_temp_path = os.path.join(cmds.workspace(q=1, fullName=1), 'images/tmp')
-    img_path = cmds.renderSettings(firstImageName=1)[0]
-    framePadding= os.path.splitext(os.path.splitext(img_path)[0])[1]
+    imgTempPath = os.path.join(cmds.workspace(q=1, fullName=1), 'images/tmp')
+    imgPath = cmds.renderSettings(firstImageName=1)[0]
+    framePadding= os.path.splitext(os.path.splitext(imgPath)[0])[1]
     framePadding = len(str(framePadding))
-    extention = os.path.splitext(img_path)[1]
-    img_path = os.path.splitext(os.path.splitext(img_path)[0])[0]
+    extension = os.path.splitext(imgPath)[1]
+    imgPath = os.path.splitext(os.path.splitext(imgPath)[0])[0]
     
     currentFrame = cmds.currentTime( query=True )
     currentFrame = '{:04d}'.format(int(currentFrame))
@@ -60,17 +60,17 @@ def loadAOV(value):
         currentFrame = ""
     
     if selectedAOV == "Beauty":
-        full_path = os.path.join(img_temp_path, img_path)
-        full_path += "{0}{1}".format(currentFrame, extention)
+        fullPath = os.path.join(imgTempPath, imgPath)
+        fullPath += "{0}{1}".format(currentFrame, extension)
     
     else:
         selectedAOV = cmds.getAttr("rsAov_{0}.{1}".format(selectedAOV, 'name'))
-        full_path = os.path.join(img_temp_path, img_path)
-        full_path += ".{0}{1}{2}".format(selectedAOV, currentFrame, extention)
+        fullPath = os.path.join(imgTempPath, imgPath)
+        fullPath += ".{0}{1}{2}".format(selectedAOV, currentFrame, extension)
     
-    full_path = full_path.replace('/','\\')
-    print "Loaded: %s" % full_path
-    cmds.renderWindowEditor(rview, e=True, li=full_path)
+    fullPath = fullPath.replace('/','\\')
+    print "Loaded: %s" % fullPath
+    cmds.renderWindowEditor(rview, e=True, li=fullPath)
 
 def refreshButtonPush(*args):
   aovUI()
