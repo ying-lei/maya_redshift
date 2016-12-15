@@ -1,32 +1,37 @@
-# ==================== Redshift Load AOV's ====================
-# Create a custom UI to load Redshift AOV into Maya RenderView
-# LIMITATION: Doesn't work on Token <Camera>
-    
+""" Redshift Load AOV's
+Create a custom UI to load Redshift AOV into Maya RenderView
+LIMITATION: Doesn't work on Token <Camera>
+"""    
 
 import maya.cmds as cmds
 import maya.mel as mel 
 import os
 
-
-########## Startup Checking ##########
 def checkRenderEnvSettings():
-    # Check current renderer
+    """ Startup Checking: Returns Boolean
+    1. Checks current renderer
+    2. Checks unsupported tokens
+    3. Checks image format
+    4. Checks AOV enable
+    Returns Boolean 
+    """
+    # 1
     if cmds.getAttr("defaultRenderGlobals.currentRenderer") != 'redshift':
         cmds.warning("Redshift is not current renderer")
         return False
     
-    # Check unsupported tokens:
+    # 2
     imgPath = cmds.getAttr("defaultRenderGlobals.imageFilePrefix")
     if "<Camera>" in str(imgPath):
         cmds.warning("Token '<Camera>' is not supported")
         return False
 
-    # Check image format:
+    # 3
     if cmds.getAttr("redshiftOptions.imageFormat") != 1:
         cmds.warning("Only .exr format is supported")
         return False
     
-    # Check AOV enable
+    # 4
     if cmds.getAttr("redshiftOptions.aovGlobalEnableMode") != 1:
         cmds.warning("Please enable AOV render (not Batch Only)")
         return False
@@ -35,9 +40,10 @@ def checkRenderEnvSettings():
     aovUI()
     return True
 
+# --------------------------------------------------------------------------------
 
-########## Update AOV list ##########
 def getActiveAOVS():
+    """ Update AOV list """
     createdAOVS = cmds.ls(et='RedshiftAOV')
 
     global activeAOVS
@@ -62,8 +68,8 @@ def getActiveAOVS():
         cmds.warning("Please enable AOV render (not Batch Only)")
         return
 
-########## Formatting AOV file path ##########
 def loadAOV(value):
+    """ Formatting AOV file path """
     getActiveAOVS()
 
     rview = cmds.getPanel(sty = 'renderWindowPanel')
@@ -99,9 +105,10 @@ def loadAOV(value):
     print "Loaded: %s" % fullPath
     cmds.renderWindowEditor(rview, e=True, li=fullPath)
 
+# --------------------------------------------------------------------------------
 
-########## Main UI ##########
 def aovUI():
+    """ Main UI """
     getActiveAOVS() 
     cmds.warning("AOV will be available after render (not IPR)")
     
@@ -130,12 +137,12 @@ def aovUI():
     cmds.showWindow('aovWindow')
  
 
-########## UI: REFRESH button##########
 def refreshButtonPush(*args):
-  aovUI()
+    """ UI: REFRESH button """
+    aovUI()
 
-########## UI: RENDER button ##########
 def renderButtonPush(*args):
+    """ UI: RENDER button """
     if checkRenderEnvSettings() == False:
         return
 
