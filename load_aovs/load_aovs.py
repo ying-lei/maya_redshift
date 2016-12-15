@@ -13,31 +13,27 @@ def checkRenderEnvSettings():
     # Check current renderer
     if cmds.getAttr("defaultRenderGlobals.currentRenderer") != 'redshift':
         cmds.warning("Redshift is not current renderer")
-        return
+        return False
     
     # Check unsupported tokens:
     imgPath = cmds.getAttr("defaultRenderGlobals.imageFilePrefix")
-    imgPath = str(imgPath)
-    def findInvalidString():
-        for line in imgPath.split("\n"):
-            if "<Camera>" in line:
-                return True
-    if findInvalidString()== True:
+    if "<Camera>" in str(imgPath):
         cmds.warning("Token '<Camera>' is not supported")
-        return
+        return False
 
     # Check image format:
     if cmds.getAttr("redshiftOptions.imageFormat") != 1:
         cmds.warning("Only .exr format is supported")
-        return
+        return False
     
     # Check AOV enable
     if cmds.getAttr("redshiftOptions.aovGlobalEnableMode") != 1:
         cmds.warning("Please enable AOV render (not Batch Only)")
-        return
+        return False
     
     cmds.loadPlugin('OpenEXRLoader.mll')
     aovUI()
+    return True
 
 
 ########## Update AOV list ##########
@@ -140,6 +136,8 @@ def refreshButtonPush(*args):
 
 ########## UI: RENDER button ##########
 def renderButtonPush(*args):
+    if checkRenderEnvSettings() == False:
+        return
 
     getActiveAOVS()
     # Save initial setup 
