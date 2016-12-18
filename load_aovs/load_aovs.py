@@ -13,6 +13,7 @@ def checkRenderEnvSettings():
     2. Checks unsupported tokens
     3. Checks image format
     4. Checks AOV enable
+    5. Checks if active AOV exists
     Returns Boolean 
     """
     # 1
@@ -25,15 +26,21 @@ def checkRenderEnvSettings():
     if "<Camera>" in str(imgPath):
         cmds.warning("Token '<Camera>' is not supported")
         return False
-
+    
     # 3
     if cmds.getAttr("redshiftOptions.imageFormat") != 1:
         cmds.warning("Only .exr format is supported")
         return False
-    
+        
     # 4
     if cmds.getAttr("redshiftOptions.aovGlobalEnableMode") != 1:
         cmds.warning("Please enable AOV render (not Batch Only)")
+        return False
+    
+    # 5
+    getActiveAOVS()
+    if activeAOVS == []:
+        cmds.warning("No aov's setup")
         return False
     
     cmds.loadPlugin('OpenEXRLoader.mll')
@@ -59,14 +66,7 @@ def getActiveAOVS():
         if cmds.getAttr("{0}.enabled".format(item))!= 0:
             activeAOVS.append( item )
             aovNames.append( item.split('_', 1)[1])
-   
-    if activeAOVS == []:
-        cmds.warning("No aov's setup")
-        return
 
-    if cmds.getAttr("redshiftOptions.aovGlobalEnableMode") != 1:
-        cmds.warning("Please enable AOV render (not Batch Only)")
-        return
 
 def loadAOV(value):
     """ Formatting AOV file path """
@@ -111,7 +111,7 @@ def aovUI():
     """ Main UI """
     getActiveAOVS() 
     cmds.warning("AOV will be available after render (not IPR)")
-    
+
     if cmds.window('aovWindow', ex=1):
         cmds.deleteUI('aovWindow')
     
@@ -139,32 +139,25 @@ def aovUI():
 
 def refreshButtonPush(*args):
     """ UI: REFRESH button """
+    if checkRenderEnvSettings() == False:
+        return
     aovUI()
 
 def renderButtonPush(*args):
     """ UI: RENDER button """
     if checkRenderEnvSettings() == False:
         return
-
+    
     getActiveAOVS()
     # Save initial setup 
     mergeInitSetting = int(cmds.getAttr('redshiftOptions.exrForceMultilayer'))
     cropInitSetting = int(cmds.getAttr('redshiftOptions.autocrop'))
-    if activeAOVS == []:
-        cmds.warning("No aov's setup")
-        return
-    
-    if cmds.getAttr("redshiftOptions.aovGlobalEnableMode") != 1:
-        cmds.warning("Please enable AOV render (not Batch Only)")
-        return
-    
     aovNameInitSetting = cmds.getAttr('{0}.filePrefix'.format(activeAOVS[0]))
     
     # Ovveride
     cmds.setAttr('redshiftOptions.exrForceMultilayer',0)
     cmds.setAttr('redshiftOptions.autocrop',0)
-    
-    
+       
     for item in activeAOVS:
         mel.eval('setAttr -type "string" {0}.filePrefix "<BeautyPath>/<BeautyFile>.<RenderPass>"'.format(item))
  
