@@ -121,6 +121,7 @@ def aovUI():
     descAov = cmds.text( label="Redshift Load AOV's",w=150,h=22,fn='boldLabelFont',bgc=(0.15,0.15,0.15))
     aovsList = cmds.optionMenu( 'aovsListMenu',w=140,label='AOV',cc=loadAOV )
     renderButton = cmds.button(w=150, label='RENDER', command=renderButtonPush)
+    renderRegionButton = cmds.button(w=150, label='RENDER REGION', command=renderRegionButtonPush)
     refreshButton = cmds.button(w=150, label='REFRESH UI', command=refreshButtonPush)
  
     cmds.menuItem(label='Beauty')
@@ -132,7 +133,8 @@ def aovUI():
     cmds.formLayout('wndLayout',e=1,af=[ (descAov,'top',0), (descAov,'left',0) ])
     cmds.formLayout('wndLayout',e=1,af=[ (aovsList,'top',25), (aovsList,'left',5) ])
     cmds.formLayout('wndLayout',e=1,af=[ (renderButton,'top',50) ])
-    cmds.formLayout('wndLayout',e=1,af=[ (refreshButton,'top',75) ])
+    cmds.formLayout('wndLayout',e=1,af=[ (renderRegionButton,'top',75) ])
+    cmds.formLayout('wndLayout',e=1,af=[ (refreshButton,'top',100) ])
 
     cmds.showWindow('aovWindow')
  
@@ -162,6 +164,36 @@ def renderButtonPush(*args):
         mel.eval('setAttr -type "string" {0}.filePrefix "<BeautyPath>/<BeautyFile>.<RenderPass>"'.format(item))
  
     mel.eval("renderIntoNewWindow render")
+    
+    # Revert setup 
+    cmds.setAttr('redshiftOptions.exrForceMultilayer',mergeInitSetting)
+    cmds.setAttr('redshiftOptions.autocrop',cropInitSetting)
+
+    for item in activeAOVS:
+        mel.eval('setAttr -type "string" {0}.filePrefix "{1}"'.format(item,aovNameInitSetting))
+
+    aovUI()
+
+
+def renderRegionButtonPush(*args):
+    """ UI: RENDER REGION button """
+    if checkRenderEnvSettings() == False:
+        return
+    
+    getActiveAOVS()
+    # Save initial setup 
+    mergeInitSetting = int(cmds.getAttr('redshiftOptions.exrForceMultilayer'))
+    cropInitSetting = int(cmds.getAttr('redshiftOptions.autocrop'))
+    aovNameInitSetting = cmds.getAttr('{0}.filePrefix'.format(activeAOVS[0]))
+    
+    # Ovveride
+    cmds.setAttr('redshiftOptions.exrForceMultilayer',0)
+    cmds.setAttr('redshiftOptions.autocrop',0)
+       
+    for item in activeAOVS:
+        mel.eval('setAttr -type "string" {0}.filePrefix "<BeautyPath>/<BeautyFile>.<RenderPass>"'.format(item))
+ 
+    mel.eval("renderWindowRenderRegion renderView;")
     
     # Revert setup 
     cmds.setAttr('redshiftOptions.exrForceMultilayer',mergeInitSetting)
