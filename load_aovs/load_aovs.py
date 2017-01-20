@@ -137,7 +137,47 @@ def aovUI():
     cmds.formLayout('wndLayout',e=1,af=[ (refreshButton,'top',100) ])
 
     cmds.showWindow('aovWindow')
+
+# --------------------------------------------------------------------------------
+
+def renderAOV(callback):
+    # Check render settings
+    if checkRenderEnvSettings() == False:
+        return
+    
+    getActiveAOVS()
+    # Save initial setup 
+    mergeInitSetting = int(cmds.getAttr('redshiftOptions.exrForceMultilayer'))
+    cropInitSetting = int(cmds.getAttr('redshiftOptions.autocrop'))
+    aovNameInitSetting = cmds.getAttr('{0}.filePrefix'.format(activeAOVS[0]))
+    
+    # Ovveride
+    cmds.setAttr('redshiftOptions.exrForceMultilayer',0)
+    cmds.setAttr('redshiftOptions.autocrop',0)
+       
+    for item in activeAOVS:
+        mel.eval('setAttr -type "string" {0}.filePrefix "<BeautyPath>/<BeautyFile>.<RenderPass>"'.format(item))
  
+    callback()
+    
+    # Revert setup 
+    cmds.setAttr('redshiftOptions.exrForceMultilayer',mergeInitSetting)
+    cmds.setAttr('redshiftOptions.autocrop',cropInitSetting)
+
+    for item in activeAOVS:
+        mel.eval('setAttr -type "string" {0}.filePrefix "{1}"'.format(item,aovNameInitSetting))
+
+    aovUI()
+
+
+def performFullRender():
+    mel.eval("renderIntoNewWindow render")
+
+
+def performRegionRender():
+    mel.eval("renderWindowRenderRegion renderView;")
+
+# --------------------------------------------------------------------------------
 
 def refreshButtonPush(*args):
     """ UI: REFRESH button """
@@ -145,64 +185,15 @@ def refreshButtonPush(*args):
         return
     aovUI()
 
+
 def renderButtonPush(*args):
     """ UI: RENDER button """
-    if checkRenderEnvSettings() == False:
-        return
-    
-    getActiveAOVS()
-    # Save initial setup 
-    mergeInitSetting = int(cmds.getAttr('redshiftOptions.exrForceMultilayer'))
-    cropInitSetting = int(cmds.getAttr('redshiftOptions.autocrop'))
-    aovNameInitSetting = cmds.getAttr('{0}.filePrefix'.format(activeAOVS[0]))
-    
-    # Ovveride
-    cmds.setAttr('redshiftOptions.exrForceMultilayer',0)
-    cmds.setAttr('redshiftOptions.autocrop',0)
-       
-    for item in activeAOVS:
-        mel.eval('setAttr -type "string" {0}.filePrefix "<BeautyPath>/<BeautyFile>.<RenderPass>"'.format(item))
- 
-    mel.eval("renderIntoNewWindow render")
-    
-    # Revert setup 
-    cmds.setAttr('redshiftOptions.exrForceMultilayer',mergeInitSetting)
-    cmds.setAttr('redshiftOptions.autocrop',cropInitSetting)
-
-    for item in activeAOVS:
-        mel.eval('setAttr -type "string" {0}.filePrefix "{1}"'.format(item,aovNameInitSetting))
-
-    aovUI()
+    renderAOV(performFullRender)
 
 
 def renderRegionButtonPush(*args):
     """ UI: RENDER REGION button """
-    if checkRenderEnvSettings() == False:
-        return
-    
-    getActiveAOVS()
-    # Save initial setup 
-    mergeInitSetting = int(cmds.getAttr('redshiftOptions.exrForceMultilayer'))
-    cropInitSetting = int(cmds.getAttr('redshiftOptions.autocrop'))
-    aovNameInitSetting = cmds.getAttr('{0}.filePrefix'.format(activeAOVS[0]))
-    
-    # Ovveride
-    cmds.setAttr('redshiftOptions.exrForceMultilayer',0)
-    cmds.setAttr('redshiftOptions.autocrop',0)
-       
-    for item in activeAOVS:
-        mel.eval('setAttr -type "string" {0}.filePrefix "<BeautyPath>/<BeautyFile>.<RenderPass>"'.format(item))
- 
-    mel.eval("renderWindowRenderRegion renderView;")
-    
-    # Revert setup 
-    cmds.setAttr('redshiftOptions.exrForceMultilayer',mergeInitSetting)
-    cmds.setAttr('redshiftOptions.autocrop',cropInitSetting)
-
-    for item in activeAOVS:
-        mel.eval('setAttr -type "string" {0}.filePrefix "{1}"'.format(item,aovNameInitSetting))
-
-    aovUI()
+    renderAOV(performRegionRender)
 
 
 checkRenderEnvSettings()
